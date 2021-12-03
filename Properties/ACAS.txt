@@ -1,0 +1,69 @@
+Property 1:
+__ESBMC_assume(x0 >= 55947.691 && x0 <= 60760);
+__ESBMC_assume(x1 >= -3.141593 && x1 <= 3.141593);
+__ESBMC_assume(x2 >= -3.141593 && x2 <= 3.141593);
+__ESBMC_assume(x3 >= 1145 && x3 <= 1200);
+__ESBMC_assume(x4 >= 0 && x4 <= 60 );
+
+Property 2:
+__ESBMC_assume(x0 >= 55947.691 && x0 <= 60760);
+__ESBMC_assume(x1 >= -3.141593 && x1 <= 3.141593);
+__ESBMC_assume(x2 >= -3.141593 && x2 <= 3.141593);
+__ESBMC_assume(x3 >= 1145 && x3 <= 1200);
+__ESBMC_assume(x4 >= 0 && x4 <= 60 );
+
+Property 3:
+__ESBMC_assume(x0 >= 1500 && x0 <= 1800);
+__ESBMC_assume(x1 >= -0.06 && x1 <= 0.06);
+__ESBMC_assume(x2 >= 3.10 && x2 <= 3.141593);
+__ESBMC_assume(x3 >= 980 && x3 <= 1200);
+__ESBMC_assume(x4 >= 960 && x4 <= 1200 );
+
+Property 4:
+__ESBMC_assume(x0 >= 1500 && x0 <= 1800);
+__ESBMC_assume(x1 >= -0.06 && x1 <= 0.06);
+__ESBMC_assume(x3 >= 1000 && x3 <= 1200);
+__ESBMC_assume(x4 >= 700 && x4 <= 800 );
+
+Property 5:
+__ESBMC_assume(x0 >= 250 && x0 <= 400);
+__ESBMC_assume(x1 >= 0.2 && x1 <= 0.4);
+__ESBMC_assume(x2 >= -3.141592 && x2 <= (-3.141592+0.005));
+__ESBMC_assume(x3 >= 100 && x3 <= 400);
+__ESBMC_assume(x4 >= 0 && x4 <= 400 );
+
+Property 6:
+__ESBMC_assume(x0 >= 12000 && x0 <= 62000);
+__ESBMC_assume((x1 >= 0.7 && x1 <= 3.141592) || (x1 >= -3.141592 && x1 <= -0.7));
+__ESBMC_assume(x2 >= -3.141592 && x2 <= (-3.141592+0.005));
+__ESBMC_assume(x3 >= 100 && x3 <= 1200);
+__ESBMC_assume(x4 >= 0 && x4 <= 1200 );
+
+Property 7:
+__ESBMC_assume(x0 >= 0 && x0 <= 60760);
+__ESBMC_assume(x1 >= -3.141592 && x1 <= 3.141592);
+__ESBMC_assume(x2 >= -3.141592 && x2 <= 3.141592);
+__ESBMC_assume(x3 >= 100 && x3 <= 1200);
+__ESBMC_assume(x4 >= 0 && x4 <= 1200 );
+
+Property 8:
+__ESBMC_assume(x0 >= 0 && x0 <= 60760);
+__ESBMC_assume(x1 >= -3.141592 && x1 <= -0.75*3.141592);
+__ESBMC_assume(x2 >= -0.1 && x2 <= 0.1);
+__ESBMC_assume(x3 >= 600 && x3 <= 1200);
+__ESBMC_assume(x4 >= 600 && x4 <= 1200 );
+
+Property 9:
+__ESBMC_assume(x0 >= 2000 && x0 <= 7000);
+__ESBMC_assume(x1 >= -0.4 && x1 <= -0.14);
+__ESBMC_assume(x2 >= -3.141592 && x2 <= (-3.141592+0.01));
+__ESBMC_assume(x3 >= 100 && x3 <= 150);
+__ESBMC_assume(x4 >= 0 && x4 <= 150);
+
+Property 10:
+__ESBMC_assume(x0 >= 36000 && x0 <= 60760);
+__ESBMC_assume(x1 >= 0.7 && x1 <= 3.141592);
+__ESBMC_assume(x2 >= -3.141592 && x2 <= (-3.141592+0.01));
+__ESBMC_assume(x3 >= 900 && x3 <= 1200);
+__ESBMC_assume(x4 >= 600 && x4 <= 1200);
+
