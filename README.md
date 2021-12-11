@@ -10,6 +10,10 @@ You can find detailed descriptions of QNNVerifyer in paper QNNVerifier: A Tool f
 
 https://arxiv.org/pdf/2111.13110.pdf
 
+And: Verifying Quantized Neural Networks using SMT-Based Model Checking
+
+https://arxiv.org/pdf/2106.05997.pdf
+
 ## Getting Started
 
 ### Dependencies
