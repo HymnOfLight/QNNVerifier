@@ -6,14 +6,11 @@ QNNVerifier
 
 A Tool for Verifying Neural Networks using SMT-Based Model Checking. Using Frama-C and ESBMC as the backends. 
 You can find detailed descriptions of QNNVerifyer in paper QNNVerifier: A Tool for Verifying Neural Networks using SMT-Based Model Checking
- https://arxiv.org/pdf/2111.13110.pdf
+https://arxiv.org/pdf/2111.13110.pdf
 
 ## Getting Started
 
 ### Dependencies
-
-* Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-* ex. Windows 10
 
 Ubuntu or The Windows Subsystem for Linux(WSL), We highly recommend users to compile and run the code under Ubuntu 20.04 in case any potential dependency or compilation errors.
 tensorflow 2.7.0 keras 2.7.0(for keras2C). 
@@ -26,9 +23,6 @@ python 3.8
 
 ### Installing
 
-* How/where to download your program
-* Any modifications needed to be made to files/folders
-
 Firstly install Frama-C and ESBMC and add them to PATH:
 Frama-C:
 https://frama-c.com/html/get-frama-c.html
@@ -39,12 +33,6 @@ Then just clone this repo to anywhere you want.
 
 
 ### Executing program
-
-* How to run the program
-* Step-by-step bullets
-```
-code blocks for commands
-```
 
 Use ./src/nnetconverter or ./src/nnetconverterwindowed, following the guidance to convert various models to C files. 
 If you end with format nnet, last step use NNet2C:
