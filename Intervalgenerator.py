@@ -31,7 +31,7 @@ def main(argv):
         esbmcFile = pathframacp8[0:pathframacp8.find(".interval")] + ".c"
         importInterval(esbmcFile, esbmcAssumes)
     elif sys.argv[1] == '-e2':
-        pathframacp8 = input("Please type the targeted file\n")
+        pathframacp9 = input("Please type the targeted file\n")
         print(pathframacp9)
         esbmcAssumes = sumarizeInterval(pathframacp9)
         esbmcFile = pathframacp9[0:pathframacp9.find(".interval")] + ".c"

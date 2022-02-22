@@ -1,14 +1,13 @@
-import onnx
 from keras.models import load_model
 import tensorflow as tf
 import os
 import os.path as osp
 from keras import backend as K
-input_path = './'
-weight_file = 'mnist.h5'
+input_path = '/mnt/c/projects/RnnVerify/models'
+weight_file = 'model_20classes_rnn2_fc32_fc32_fc32_fc32_fc32.h5'
 weight_file_path = osp.join(input_path,weight_file)
 output_graph_name = weight_file[:-3] + '.pb'
-def h5_to_pb(h5_model,output_dir,model_name,out_prefix = "Y",log_tensorboard = True):
+def h5_to_pb(h5_model,output_dir,model_name,out_prefix = "X",log_tensorboard = True):
     if osp.exists(output_dir) == False:
         os.mkdir(output_dir)
     out_nodes = []
