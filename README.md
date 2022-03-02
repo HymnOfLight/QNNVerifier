@@ -87,7 +87,10 @@ Mikel Luján (University of Manchester, United Kingdom) <Mikel.Lujan@manchester.
 Lucas Cordeiro (University of Manchester, United Kingdom) <lucas.cordeiro@manchester.ac.uk>
 
 ## Version History
-
+* 0.4
+    * Testing onnx files using onnxruntime via python.
+* 0.3
+    * Create a new branch, switch to onnx2c in order to generate C code directly from onnx files.
 * 0.2
     * Update README
 * 0.1
