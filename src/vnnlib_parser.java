@@ -20,7 +20,7 @@ public class vnnlib_parser {
     {
 
     }
-    public List<String> readstatements_acas(String filepath) {
+    public List<String> readstatements_acas(String filepath,int mode) {
         List<String> assumelist = new ArrayList<String>();
         BufferedReader vnnlibReader;
         float[] lowerbound = new float[5];
@@ -39,16 +39,24 @@ public class vnnlib_parser {
                     int i = Integer.valueOf(line.substring(line.indexOf("t") + 2, line.indexOf(":"))).intValue();
                     lowerbound[i] = Float.valueOf(line.substring(line.indexOf("(") + 1, line.indexOf(",") - 1)).floatValue();
                     upperbound[i] = Float.valueOf(line.substring(line.indexOf(",") + 2, line.indexOf(")") - 1)).floatValue();
-                    assumelist.add("__ESBMC_assume(tensor_input[" + String.valueOf(i) + "]>=" + String.valueOf(lowerbound[i]) + " && tensor_input[" + String.valueOf(i) + "]<=" + String.valueOf(upperbound[i]) + ");");
-                }
-            } while (line != null);
+                    if (mode == 0) {
+                        assumelist.add("__ESBMC_assume(tensor_input[1][1][1][" + String.valueOf(i) + "]>=" + String.valueOf(lowerbound[i]) + " && tensor_input[1][1][1][" + String.valueOf(i) + "]<=" + String.valueOf(upperbound[i]) + ");");
+                    } else if (mode == 1)//mode 1: insert frama-c annotations
+                    {
+                        String annotations = "float tensor_input[1][" + String.valueOf(i) + "] = Frama_C_float_interval(" + String.valueOf(lowerbound[i]) + " , " + String.valueOf(upperbound[i]) + ");";
+                        System.out.println(annotations);
+                        assumelist.add(annotations);
+                    } else {
+
+                    }
+                }} while (line != null);
         } catch (IOException e) {
             e.printStackTrace();
         }
         System.out.println(assumelist);
         return assumelist;
     }
-    public List<String> readstatements_cifar(String filepath) {
+    public List<String> readstatements_cifar(String filepath, int mode) {
         List<String> assumelist = new ArrayList<String>();
         BufferedReader vnnlibReader;
         try {
@@ -62,22 +70,34 @@ public class vnnlib_parser {
                 line = vnnlibReader.readLine();
                 if (line == null) {
                     return assumelist;
-                }
-                else if (line.startsWith("(assert (<= X")) {
-                    int i = Integer.valueOf(line.substring(line.indexOf("_")+1, line.lastIndexOf(" "))).intValue();
-                    System.out.println(i);
-                    upperbound = Float.valueOf(line.substring(line.lastIndexOf(" ") , line.lastIndexOf(")") - 2)).floatValue();
+                } else if (line.startsWith("(assert (<= X")) {
+                    int i = Integer.valueOf(line.substring(line.indexOf("_") + 1, line.lastIndexOf(" ")));
+                    //System.out.println(i);
+                    upperbound = Float.valueOf(line.substring(line.lastIndexOf(" "), line.lastIndexOf(")") - 2));
                     line = vnnlibReader.readLine();
-                    lowerbound = Float.valueOf(line.substring(line.lastIndexOf(" ") , line.lastIndexOf(")") - 2)).floatValue();
+                    lowerbound = Float.valueOf(line.substring(line.lastIndexOf(" "), line.lastIndexOf(")") - 2));
                     line = vnnlibReader.readLine();
-                    int j = i%3;
-                    int m = i/3;
-                    int k = m%32;
-                    int n = m/32;
-                    System.out.println("__ESBMC_assume(tensor_x_0[1][" + String.valueOf(k) + "][" +String.valueOf(n) + "][" +String.valueOf(j) +"]>=" + String.valueOf(lowerbound) + " && tensor_x_0[1][" + String.valueOf(k) + "][" +String.valueOf(n) + "][" +String.valueOf(j) +"]<=" + String.valueOf(upperbound) + ");");
-                    assumelist.add("__ESBMC_assume(tensor_x_0[1][" + String.valueOf(k) + "][" +String.valueOf(n) + "][" +String.valueOf(j) +"]>=" + String.valueOf(lowerbound) + " && tensor_x_0[1][" + String.valueOf(k) + "][" +String.valueOf(n) + "][" +String.valueOf(j) +"]<=" + String.valueOf(upperbound) + ");");
+                    int j = i % 3;
+                    int m = i / 3;
+                    int k = m % 32;
+                    int n = m / 32;
+                    if (mode == 0)//mode 0: insert esbmc assumes
+                    {
+                        String esbmcassumes = "__ESBMC_assume(tensor_x_0[1][" + String.valueOf(n) + "][" + String.valueOf(k) + "][" + String.valueOf(j) + "]>=" + String.valueOf(lowerbound) + " && tensor_x_0[1][" + String.valueOf(n) + "][" + String.valueOf(k) + "][" + String.valueOf(j) + "]<=" + String.valueOf(upperbound) + ");";
+                        System.out.println(esbmcassumes);
+                        assumelist.add(esbmcassumes);
+                        //assumelist.add("__ESBMC_assume(tensor_x_0[1][" + String.valueOf(k) + "][" + String.valueOf(n) + "][" + String.valueOf(j) + "]>=" + String.valueOf(lowerbound) + " && tensor_x_0[1][" + String.valueOf(k) + "][" + String.valueOf(n) + "][" + String.valueOf(j) + "]<=" + String.valueOf(upperbound) + ");");
+                    } else if (mode == 1)//mode 1: insert frama-c annotations
+                    {
+                        String annotations = "float tensor_x_0[1][" + String.valueOf(n) + "][" + String.valueOf(k) + "][" + String.valueOf(j) + "] = Frama_C_float_interval(" + String.valueOf(lowerbound) + " , " + String.valueOf(upperbound) + ");";
+                        System.out.println(annotations);
+                        assumelist.add(annotations);
+                    } else {
+
+                    }
+
                 }
-            } while (line != null);
+            }while (line != null) ;
             System.out.println("read properties finished");
         } catch (IOException e) {
             e.printStackTrace();
@@ -85,7 +105,7 @@ public class vnnlib_parser {
         return assumelist;
     }
 
-    public List<String> readstatements_mnist(String filepath)
+    public List<String> readstatements_mnist(String filepath, int mode)
     {
         List<String> assumelist = new ArrayList<String>();
         BufferedReader vnnlibReader;
@@ -105,10 +125,19 @@ public class vnnlib_parser {
                     line = vnnlibReader.readLine();
                     lowerbound = Float.valueOf(line.substring(line.lastIndexOf(" ") , line.lastIndexOf(")") - 2)).floatValue();
                     int i = Integer.valueOf(line.substring(line.indexOf("_")+1, line.lastIndexOf(" "))).intValue();
-                    assumelist.add("__ESBMC_assume(tensor_0[1][" + String.valueOf(i) + "][1]>=" + String.valueOf(lowerbound) + " && tensor_0[1][" + String.valueOf(i) + "][1]<=" + String.valueOf(upperbound) + ");");
+                    if (mode == 0) {//mode 0 insert esbmc assumes
+                        assumelist.add("__ESBMC_assume(tensor_0[1][" + String.valueOf(i) + "][1]>=" + String.valueOf(lowerbound) + " && tensor_0[1][" + String.valueOf(i) + "][1]<=" + String.valueOf(upperbound) + ");");
+                    }else if (mode == 1)//mode 1: insert frama-c annotations
+                    {
+                        String annotations = "float tensor_input[1][" + String.valueOf(i) + "] = Frama_C_float_interval(" + String.valueOf(lowerbound) + " , " + String.valueOf(upperbound) + ");";
+                        System.out.println(annotations);
+                        assumelist.add(annotations);
+                    } else {
+
+                    }
                     line = vnnlibReader.readLine();
                 }
-            } while (line != null);
+            }while (line != null);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -149,17 +178,17 @@ public class vnnlib_parser {
         if (extension.equals(".c")) {
             List<String> assumelist;
             if (name.contains("ACASXU")) {
-                assumelist = readstatements_acas(vnnlibfile);
+                assumelist = readstatements_acas(vnnlibfile,0);
             } else if(name.contains("mnist")){
-                assumelist = readstatements_mnist(vnnlibfile);
+                assumelist = readstatements_mnist(vnnlibfile,0);
             }
             else if(name.contains("cifar"))
             {
-                assumelist = readstatements_cifar(vnnlibfile);
+                assumelist = readstatements_cifar(vnnlibfile,0);
             }
             else
             {
-                assumelist = readstatements_cifar(vnnlibfile);
+                assumelist = readstatements_cifar(vnnlibfile,0);
             }
             insert_properties(Cfile.toString(), assumelist);
         }
@@ -175,12 +204,12 @@ public class vnnlib_parser {
             if (extension.equals(".c")) {
                 List<String> assumelist;
                 if (name.contains("ACASXU")) {
-                    assumelist = readstatements_acas(vnnlibfile);
+                    assumelist = readstatements_acas(vnnlibfile,0);
                 } else if(name.contains("mnist")){
-                    assumelist = readstatements_mnist(vnnlibfile);
+                    assumelist = readstatements_mnist(vnnlibfile,0);
                 }else
                 {
-                    assumelist = readstatements_mnist(vnnlibfile);
+                    assumelist = readstatements_cifar(vnnlibfile,0);
                 }
                 insert_properties(x.toString(), assumelist);
             }
@@ -199,6 +228,28 @@ public class vnnlib_parser {
             }
         }
     }
+    public void insert_framac_annotations(String CfilePath, String vnnlibfile) throws IOException
+    {
+        Path path = Paths.get(CfilePath);
+        List<Path> paths = listFiles(path);
+        for (Path x : paths) {
+            String extension = "";
+            String name = x.toString();
+            extension = name.substring(name.lastIndexOf("."));
+            if (extension.equals(".c")) {
+                List<String> assumelist;
+                if (name.contains("ACASXU")) {
+                    assumelist = readstatements_acas(vnnlibfile,1);//mode 1 insert frama-c annotations
+                } else if(name.contains("mnist")){
+                    assumelist = readstatements_mnist(vnnlibfile,1);
+                }else
+                {
+                    assumelist = readstatements_cifar(vnnlibfile,1);
+                }
+                insert_properties(x.toString(), assumelist);
+            }
+        }
+    }
     public static void main(String[] arguments) throws IOException {
         vnnlib_parser parser = new vnnlib_parser();
         if(arguments[0].contains("-all"))
@@ -209,6 +260,11 @@ public class vnnlib_parser {
         {
             System.out.println("Inserting properties to single file");
             parser.insert_properties_byvnnlib_single(arguments[1], arguments[2]);
+        }
+        else if (arguments[0].contains("-framac"))
+        {
+            System.out.println("Generating framac annotations from vnnlib");
+            parser.insert_framac_annotations(arguments[1], arguments[2]);
         }
         else{
 

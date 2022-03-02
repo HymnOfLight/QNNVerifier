@@ -54,7 +54,10 @@ class cmdexecutor implements Runnable
     }
 }
 
-public class keras2c_injectfxp{
+public class keras2c_injectfxp {
+
+    public static int isInterval;
+
     public List<Path> listFiles(Path path) throws IOException {
         List<Path> result;
         try (Stream<Path> walk = Files.walk(path)) {
@@ -63,21 +66,21 @@ public class keras2c_injectfxp{
         }
         return result;
     }
-    public List<String> executepython(String tmpfilepath, String tmpfilename, String envfilepath, String pyfilename)
-    {
+
+    public List<String> executepython(String tmpfilepath, String tmpfilename, String envfilepath, String pyfilename) {
         Runtime runtime = Runtime.getRuntime();
         BufferedReader br = null;
-        List <String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<>();
         try {
             File file = new File(tmpfilepath);
             File tmpFile = new File(tmpfilename);
-            if (!file.exists()){
+            if (!file.exists()) {
                 file.mkdirs();
             }
-            if(!tmpFile.exists()) {
+            if (!tmpFile.exists()) {
                 tmpFile.createNewFile();
             }
-            String[] commandlinekeras2c = new String[] {"C:\\Users\\DELL\\anaconda3\\envs\\tensorflow2\\python.exe" , pyfilename};
+            String[] commandlinekeras2c = new String[]{"C:\\Users\\DELL\\anaconda3\\envs\\tensorflow2\\python.exe", pyfilename};
             System.out.println(Arrays.toString(commandlinekeras2c));
             ProcessBuilder pb = new ProcessBuilder().command(commandlinekeras2c).inheritIO();
             pb.redirectErrorStream(true);
@@ -85,10 +88,10 @@ public class keras2c_injectfxp{
             pb.directory(new File(envfilepath));
             pb.start().waitFor();
             InputStream in = new FileInputStream(tmpFile);
-            br= new BufferedReader(new InputStreamReader(in));
+            br = new BufferedReader(new InputStreamReader(in));
             String line = null;
 
-            while((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null) {
                 System.out.println(line);
                 lines.add(line);
             }
@@ -98,7 +101,7 @@ public class keras2c_injectfxp{
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if(br != null) {
+            if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
@@ -109,9 +112,8 @@ public class keras2c_injectfxp{
         return lines;
     }
 
-    public List<String> onnx2keras(String sourcefilepath, String outputpath)
-    {
-        String filename =".././onnx2keras/converter.py";
+    public List<String> onnx2keras(String sourcefilepath, String outputpath) {
+        String filename = ".././onnx2keras/converter.py";
         try {
             Files.deleteIfExists(Paths.get(filename));
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
@@ -123,7 +125,7 @@ public class keras2c_injectfxp{
             writer.newLine();
             writer.write("import os");
             writer.newLine();
-            writer.write("g = os.walk(r\"" + sourcefilepath +"\")\n");
+            writer.write("g = os.walk(r\"" + sourcefilepath + "\")\n");
             writer.newLine();
             writer.write("for path,dir_list,file_list in g:");
             writer.newLine();
@@ -145,48 +147,45 @@ public class keras2c_injectfxp{
             writer.newLine();
             writer.write("            keras.models.save_model(k_model," + outputpath + "functionname + '.h5' ,overwrite=True,include_optimizer=True)");
             writer.newLine();
-            return(executepython("../",".././onnx2keras.log",".././onnx2keras",".././onnx2keras/converter.py"));
+            return (executepython("../", ".././onnx2keras.log", ".././onnx2keras", ".././onnx2keras/converter.py"));
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public void onnx2c(String sourcefile, String outputpath, String onnx_2cpath)
-    {
+    public void onnx2c(String sourcefile, String outputpath, String onnx_2cpath) {
         Runtime runtime = Runtime.getRuntime();
         BufferedReader br = null;
-        List <String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<>();
         try {
             String functionname = sourcefile.substring(0, sourcefile.lastIndexOf("."));
-            String[] commandlineonnx2c = new String[] {onnx_2cpath,sourcefile,functionname};
+            String[] commandlineonnx2c = new String[]{onnx_2cpath, sourcefile, functionname};
             System.out.println(Arrays.toString(commandlineonnx2c));
             ProcessBuilder pb = new ProcessBuilder().command(commandlineonnx2c).inheritIO();
             pb.redirectErrorStream(true);
             pb.start().waitFor();
             out.println("executed finished");
-        }catch (Exception e)
-        {
+        } catch (Exception e) {
 
-        e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
-    public List<String> Keras2c(String sourcefile, String functionname)
-    {
+    public List<String> Keras2c(String sourcefile, String functionname) {
         Runtime runtime = Runtime.getRuntime();
         BufferedReader br = null;
-        List <String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<>();
         try {
             File file = new File(".././keras2c");
             File tmpFile = new File(".././keras2clog.log");
-            if (!file.exists()){
+            if (!file.exists()) {
                 file.mkdirs();
             }
-            if(!tmpFile.exists()) {
+            if (!tmpFile.exists()) {
                 tmpFile.createNewFile();
             }
-            String[] commandlinekeras2c = new String[] {"python3" , "-m" , "keras2c",sourcefile,functionname};
+            String[] commandlinekeras2c = new String[]{"python3", "-m", "keras2c", sourcefile, functionname};
             out.println(Arrays.toString(commandlinekeras2c));
             ProcessBuilder pb = new ProcessBuilder().command(commandlinekeras2c).inheritIO();
             pb.redirectErrorStream(true);
@@ -194,9 +193,9 @@ public class keras2c_injectfxp{
             pb.directory(new File(".././keras2c"));
             pb.start().waitFor();
             InputStream in = new FileInputStream(tmpFile);
-            br= new BufferedReader(new InputStreamReader(in));
+            br = new BufferedReader(new InputStreamReader(in));
             String line = null;
-            while((line = br.readLine()) != null) {
+            while ((line = br.readLine()) != null) {
                 out.println(line);
                 lines.add(line);
             }
@@ -206,7 +205,7 @@ public class keras2c_injectfxp{
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if(br != null) {
+            if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
@@ -216,19 +215,86 @@ public class keras2c_injectfxp{
         }
         return lines;
     }
-    public static int isInterval;
-    public void generate_Iris_Intervals(Path pathdir) throws IOException, InterruptedException
-    {
+
+    public void replace_content_all(File file, String target, String newContent) {
+        try {
+            InputStream is = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(is));
+            String filename = file.getName();
+            File tmpfile = new File(file.getParentFile().getAbsolutePath()
+                    + "\\" + filename + ".tmp");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tmpfile));
+            boolean flag = false;
+            String str = null;
+            while (true) {
+                str = reader.readLine();
+                if (str == null)
+                    break;
+                if (str.contains(target)) {
+                    writer.write(newContent + "\n");
+                    flag = true;
+                } else
+                    writer.write(str + "\n");
+            }
+            is.close();
+            writer.flush();
+            writer.close();
+            if (flag) {
+                file.delete();
+                tmpfile.renameTo(new File(file.getAbsolutePath()));
+            } else
+                tmpfile.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void replace_one_line(File file, String target, String newContent) {
+        try {
+            InputStream is = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(is));
+            String filename = file.getName();
+            File tmpfile = new File(file.getParentFile().getAbsolutePath()
+                    + "\\" + filename + ".tmp");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tmpfile));
+            boolean flag = false;
+            String str = null;
+            while (true) {
+                str = reader.readLine();
+                if (str == null)
+                    break;
+                if (str.contains(target)) {
+                    writer.write(newContent + "\n");
+                    flag = true;
+                    break;
+                } else
+                    writer.write(str + "\n");
+            }
+            is.close();
+            writer.flush();
+            writer.close();
+            if (flag) {
+                file.delete();
+                tmpfile.renameTo(new File(file.getAbsolutePath()));
+            } else
+                tmpfile.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void generate_Iris_Intervals(Path pathdir) throws IOException, InterruptedException {
         List<Path> paths = listFiles(pathdir);
         ExecutorService executor = Executors.newFixedThreadPool(5);
         paths.forEach(x -> {
             String extension = "";
             String name = x.toString();
             extension = name.substring(name.lastIndexOf("."));
-            if(extension.equals(".c") && name.contains("annIris") && !name.contains("interval"))
-            {
+            if (extension.equals(".c") && name.contains("annIris") && !name.contains("interval")) {
                 out.println(name);
-                List<String> execcmd =  new ArrayList<>();
+                List<String> execcmd = new ArrayList<>();
                 execcmd.add("frama-c");
                 execcmd.add("-eva");
                 execcmd.add("-eva-plevel 255");
@@ -238,17 +304,16 @@ public class keras2c_injectfxp{
             }
         });
     }
-    public void generate_ACAS_Intervals(Path pathdir) throws IOException
-    {
+
+    public void generate_ACAS_Intervals(Path pathdir) throws IOException {
         List<Path> paths = listFiles(pathdir);
         ExecutorService executor = Executors.newFixedThreadPool(5);
         paths.forEach(x -> {
             String name = x.toString();
-            if(name.contains(".c") && name.contains("ACASXU") && !name.contains("interval"))
-            {
+            if (name.contains(".c") && name.contains("ACASXU") && !name.contains("interval")) {
                 out.println(name);
                 out.println("running command: frama-c -eva " + name);
-                List<String> execcmd =  new ArrayList<>();
+                List<String> execcmd = new ArrayList<>();
                 execcmd.add("frama-c");
                 execcmd.add("-eva");
                 execcmd.add(name);
@@ -257,12 +322,12 @@ public class keras2c_injectfxp{
             }
         });
     }
-    public String breakframacline(String framacline, String char1, String char2)
-    {
-        return(framacline.substring(framacline.indexOf(char1)+1, framacline.lastIndexOf(char2)));
+
+    public String breakframacline(String framacline, String char1, String char2) {
+        return (framacline.substring(framacline.indexOf(char1) + 1, framacline.lastIndexOf(char2)));
     }
-    public List<String> castFramacToEsbmc(String framacline)
-    {
+
+    public List<String> castFramacToEsbmc(String framacline) {
 
         String value = "";
         String neuronmin = "";
@@ -270,35 +335,31 @@ public class keras2c_injectfxp{
         List<String> outputlist = new ArrayList<>();
         List<String> neuronlist = new ArrayList<>();
         String[] parts = framacline.split("\u2208");
-        if(parts[0].contains(".."))
-        {
+        if (parts[0].contains("..")) {
             String neuron = framacline.substring(0, framacline.lastIndexOf("["));
-            String startindex = framacline.substring(framacline.indexOf("[")+1,framacline.lastIndexOf("..")+1);
-            String endindex = framacline.substring(framacline.indexOf("..")+2,framacline.lastIndexOf("]")+1);
-            for(int i=Integer.valueOf(startindex); i<Integer.valueOf(endindex); i++)
-            {
+            String startindex = framacline.substring(framacline.indexOf("[") + 1, framacline.lastIndexOf(".."));
+            String endindex = framacline.substring(framacline.indexOf("..") + 2, framacline.lastIndexOf("]"));
+            for (int i = Integer.valueOf(startindex); i < Integer.valueOf(endindex); i++) {
                 neuronlist.add(neuron + "[" + i + "]");
             }
-        }
-        else
-        {
+        } else {
             neuronlist.add(framacline.substring(0, framacline.lastIndexOf(" \u2208")));
         }
         String[] parts2 = parts[0].split("\u2208");
-        if(parts2[1].contains("["))
-        {
+        if (parts2[1].contains("[")) {
+            //these are old intervals generated by frama-c, should be substituted
             neuronmin = parts2[1].substring(parts2[1].indexOf("\u2208 [") + 3, parts2[1].lastIndexOf(" .. "));
+            neuronmax = parts2[1].substring(parts2[1].lastIndexOf(" .. ") + 4, -2);
             //neuronmax = framacline[framacline.find(" .. ") + 4 : -2]
-        }
-        else
-        {
+        } else {
             isInterval = 0;
             value = parts2[1].substring(parts2[1].indexOf("\u2208 {") + 4, parts2[1].lastIndexOf(" .. "));
         }
-        neuronlist.forEach(neuron->{
-            if(isInterval == 0)
-            {
-                //outputlist.add("__ESBMC_assume(("+ neuron + " >= " + neuronmin + ") && ("+neuron + " <= " + neuronmax +"));");
+        String finalNeuronmin = neuronmin;
+        String finalNeuronmax = neuronmax;
+        neuronlist.forEach(neuron -> {
+            if (isInterval == 0) {
+                outputlist.add("__ESBMC_assume((" + neuron + " >= " + finalNeuronmin + ") && (" + neuron + " <= " + finalNeuronmax + "));");
             }
         });
         out.println(outputlist);
@@ -306,8 +367,7 @@ public class keras2c_injectfxp{
 
     }
 
-    public List<String> summarize_Interval(Path filepath) throws IOException
-    {
+    public List<String> summarize_Interval(Path filepath) throws IOException {
         int foundlayer = 0;
         String lastlayer = "";
         int counter = 0;
@@ -315,58 +375,49 @@ public class keras2c_injectfxp{
         List<String> allLines = Files.readAllLines(filepath);
         for (String line : allLines) {
             String framacline = "";
-            if(line.contains("layer"))
-            {
+            if (line.contains("layer")) {
                 foundlayer = 1;
             }
-            if(line.contains("layer") && foundlayer ==1)
-            {
-                lastlayer = line.substring(0,line.lastIndexOf("[")+1);
+            if (line.contains("layer") && foundlayer == 1) {
+                lastlayer = line.substring(0, line.lastIndexOf("[") + 1);
                 framacline = line;
                 esbmcNeuronIntervalList.addAll(castFramacToEsbmc(framacline.substring(framacline.lastIndexOf("layer"))));
                 counter++;
 
-            }
-            else if(line.contains("[") && line.contains("]") && foundlayer == 1 && !line.contains("ANALYSIS SUMMARY"))
-            {
+            } else if (line.contains("[") && line.contains("]") && foundlayer == 1 && !line.contains("ANALYSIS SUMMARY")) {
                 framacline = lastlayer + line.substring(line.indexOf("["));
                 esbmcNeuronIntervalList.addAll(castFramacToEsbmc(framacline.substring(framacline.lastIndexOf("layer"))));
                 counter++;
             }
         }
-        out.println("I counted "+ esbmcNeuronIntervalList.size() + " intervals on file: " + filepath);
+        out.println("I counted " + esbmcNeuronIntervalList.size() + " intervals on file: " + filepath);
         return esbmcNeuronIntervalList;
     }
 
     public List<String> getEsbmcIntervalFromNeuron(String neuron, List<String> esbmcassumes) {
         List<String> esbmcassume = new ArrayList<>();
-        esbmcassumes.forEach(x->{
-            if(x.contains(neuron))
-            {
+        esbmcassumes.forEach(x -> {
+            if (x.contains(neuron)) {
                 esbmcassume.add(x);
             }
         });
         return esbmcassume;
     }
 
-    public void importInterval(Path esbmcfile, List<String> esbmcassumes) throws IOException
-    {
+    public void importInterval(Path esbmcfile, List<String> esbmcassumes) throws IOException {
         List<String> esbmclines = new ArrayList<>();
         esbmclines = Files.readAllLines(esbmcfile);
         FileWriter writer = new FileWriter(esbmcfile.toString());
         BufferedWriter bw = new BufferedWriter(writer);
-        esbmclines.forEach(x->{
-            if(x.contains("tanhFunctionLUT"))
-            {
+        esbmclines.forEach(x -> {
+            if (x.contains("tanhFunctionLUT")) {
                 try {
                     bw.write(x.toString());
                     //bw.write(getEsbmcIntervalFromNeuron(esbmcline[0:esbmcline.find(" =")], esbmcassumes)+ "\n")
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
-            else
-            {
+            } else {
                 try {
                     bw.write(x.toString());
                 } catch (IOException e) {
@@ -378,46 +429,123 @@ public class keras2c_injectfxp{
         writer.close();
     }
 
+    public void importInterval_cifar(Path esbmcfile, List<String> esbmcassumes) throws IOException {
 
-    public void importIntervalAcasXU(Path esbmcfile, List<String> esbmcassumes) throws IOException
-    {
+    }
+
+    public void importInterval_mnist(Path esbmcfile, List<String> esbmcassumes) throws IOException {
         List<String> esbmclines = new ArrayList<>();
         esbmclines = Files.readAllLines(esbmcfile);
         FileWriter writer = new FileWriter(esbmcfile.toString());
         BufferedWriter bw = new BufferedWriter(writer);
-        esbmclines.forEach(x->{
-            if(x.contains("if") && x.contains("< 0") && x.contains("ANALYSIS SUMMARY"))
+        /*esbmclines.forEach(x->{
+            if(x.contains("void entry"))
             {
-                if(!x.contains("layer7"))
-                {
+
+            }
+        }*/
+    }
+
+    public List<String> castFramacToEsbmc_onnx(String framacline) {
+        String value = "";
+        String neuronmin = "";
+        String neuronmax = "";
+        List<String> outputlist = new ArrayList<>();
+        List<String> neuronlist = new ArrayList<>();
+        String[] parts = framacline.split("\u2208");
+        if (parts[0].contains("..")) {
+
+        }
+        return outputlist;
+    }
+
+
+    public List<String> summarizeIntervals_onnx(Path filepath) throws IOException
+    {
+        int foundlayer = 0;
+        String lastlayer = "";
+        int counter = 0;
+        List<String> esbmcNeuronIntervalList = new ArrayList<>();
+        List<String> allLines;
+        allLines = Files.readAllLines(filepath);
+        for (String line : allLines) {
+            String framacline = "";
+            if (line.contains("tensor")) {
+                foundlayer = 1;
+            }
+            if (line.contains("tensor") && foundlayer == 1) {
+                lastlayer = line.substring(0, line.lastIndexOf("[") + 1);
+                framacline = line;
+                esbmcNeuronIntervalList.addAll(castFramacToEsbmc_onnx(framacline.substring(framacline.lastIndexOf("tensor"))));
+                //need to rewrite the framactoesbmc in onnx2c format
+                counter++;
+
+            } else if (line.contains("[") && line.contains("]") && foundlayer == 1 && !line.contains("ANALYSIS SUMMARY")) {
+                framacline = lastlayer + line.substring(line.indexOf("["));
+                esbmcNeuronIntervalList.addAll(castFramacToEsbmc_onnx(framacline.substring(framacline.lastIndexOf("tensor"))));
+                //need to rewrite the framactoesbmc in onnx2c format
+                counter++;
+            }
+        }
+        out.println("I counted " + esbmcNeuronIntervalList.size() + counter + " intervals on file: " + filepath);
+        return esbmcNeuronIntervalList;
+    }
+    public void importIntervalAcasXU(Path esbmcfile, List<String> esbmcassumes) throws IOException //import intervals from frama-c
+    {
+        List<String> esbmclines = new ArrayList<>();
+        esbmclines = Files.readAllLines(esbmcfile);
+        FileWriter writer = new FileWriter(esbmcfile.toString());
+        File file = new File(esbmcfile.toString());
+        InputStream is = new FileInputStream(file);
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(is));
+        // tmpfile is a cache file, after substitution, it will replace the original file
+        File tmpfile = new File(file.getParentFile().getAbsolutePath()
+                + "\\" + file + ".tmp");
+        boolean flag = false;
+        String str = null;
+        while (true) {
+            str = reader.readLine();
+
+            if (str == null)
+                break;
+
+            if (str.contains("if") && str.contains("< 0") && str.contains("ANALYSIS SUMMARY")) {
+                if (!str.contains("node_linear_7_Add"))
                     try {
-                        bw.write(x.toString());
+                        writer.write(str + "\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }
-                else if(x.contains("layer7") && x.contains("*c2)+c1;"))
+                else if(str.contains("node_linear_7_Add"))
                 {
-                    try {
-                        bw.write(x.toString());
-                        //esbmcbuff.write(getEsbmcIntervalFromNeuron(esbmcline[esbmcline.find("(")+1:esbmcline.find(" <")], esbmcassumes)+ "\n")
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    for (String x : esbmclines) {
+                        String newContent = new String();
+                        newContent = String.valueOf(getEsbmcIntervalFromNeuron(x.substring(x.lastIndexOf("(") + 1, x.lastIndexOf(" <")), esbmcassumes));
+                        try {
+                            writer.write(newContent + "\n");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-                else
-                {
+                else{
                     try {
-                        bw.write(x.toString());
+                        writer.write(str + "\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             }
-
-        });
-        bw.close();
-        writer.close();
+            is.close();
+            writer.flush();
+            writer.close();
+            if (flag) {
+                file.delete();
+                tmpfile.renameTo(new File(file.getAbsolutePath()));
+            } else
+                tmpfile.delete();
+        }
     }
     public void managercastEsbmcToFramac(Path filepath) throws IOException
     {
@@ -431,7 +559,7 @@ public class keras2c_injectfxp{
             if(extension.equals(".c") && name.contains("ACASXU") && !name.contains(".interval") && !name.contains("framac.c"))
             {
                 try {
-                    castEsbmcToFramac(x.toString());
+                    generate_framac_annotations(x.toString());
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
@@ -440,71 +568,80 @@ public class keras2c_injectfxp{
         });
     }
 
-    public void castEsbmcToFramac(String filepath) throws IOException
+    public void generate_framac_annotations(String filepath) throws IOException
     {
-        String pathtowrite = filepath + Instant.now().hashCode()+".c";
-        List<String> minlist = new ArrayList<>();
-        List<String> maxlist = new ArrayList<>();
-        List<String> indexlist = new ArrayList<>();
-        BufferedReader br = new BufferedReader(new FileReader(filepath));
-        FileWriter writer = new FileWriter(pathtowrite);
-        BufferedWriter bw = new BufferedWriter(writer);
-        out.println(pathtowrite);
-        String x = null;
-        x=br.readLine();
-        out.println(x);
-        while ((x = br.readLine()) != null) {
+        try {
+            String pathtowrite = filepath + Instant.now().hashCode() + ".c";
+            List<String> minlist = new ArrayList<>();
+            List<String> maxlist = new ArrayList<>();
+            List<String> indexlist = new ArrayList<>();
+            BufferedReader br = new BufferedReader(new FileReader(filepath));
+            File file = new File(filepath);
+            InputStream is = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(is));
+            String filename = file.getName();
+            // tmpfile is a cache file, after substitution, it will replace the original file
+            File tmpfile = new File(file.getParentFile().getAbsolutePath()
+                    + "\\" + filename + ".tmp");
+            BufferedWriter bw = new BufferedWriter(new FileWriter(tmpfile));
+
+            boolean flag = false;
+            String str = null;
+            out.println(pathtowrite);
+            String x = null;
+            x = br.readLine();
             out.println(x);
-            if(x.contains("__fc_builtin"))
-            {
-                out.println("contains __fc_builtin");
-                bw.write(x.replaceFirst("//", ""));
-                bw.newLine();
-            }
-            else if(x.contains("__ESBMC_assume"))
-            {
-                out.println("contains esbmc assume");
-                bw.write(x.replaceFirst("__ESBMC", "//__ESBMC"));
-                bw.newLine();
-                //minlist.add(x.substring(x.indexOf(">=")+2, x.indexOf("&&")));
-                //maxlist.add(x.substring(x.indexOf("<=")+2, x.lastIndexOf(");")));
-                //indexlist.add(x.substring(x.indexOf("(")+2, x.lastIndexOf(">=")));
-            }
-            else if(x.contains("nondet_float") || x.contains("nondet_int"))
-            {
-                bw.write("//"+ x);
-                bw.newLine();
-            }
-            else if(x.contains("float c1"))
-            {
-                for (int i=0; i<minlist.size(); i++)
-                {
-                    bw.write("float"+ indexlist.get(i)+ " = Frama_C_float_interval(" + minlist.get(i) + "," + maxlist.get(i) + ");\n");
+            while (true) {
+                x = reader.readLine();
+                out.println(x);
+                if (x.contains("__fc_builtin")) {
+                    out.println("contains __fc_builtin");
+                    bw.write(x.replaceFirst("//", ""));
                     bw.newLine();
-                }
-                bw.write("\n" + x);
+                } else if (x.contains("__ESBMC_assume")) {
+                    out.println("contains esbmc assume");
+                    bw.write(x.replaceFirst("__ESBMC", "//__ESBMC"));
+                    bw.newLine();
+                    minlist.add(x.substring(x.indexOf(">=")+2, x.indexOf("&&")));
+                    maxlist.add(x.substring(x.indexOf("<=")+2, x.lastIndexOf(");")));
+                    indexlist.add(x.substring(x.indexOf("(")+2, x.lastIndexOf(">=")));
+                } else if (x.contains("nondet_float") || x.contains("nondet_int")) {
+                    bw.write("//" + x);
+                    bw.newLine();
+                } else if (x.contains("float c1")) {
+                    for (int i = 0; i < minlist.size(); i++) {
+                        bw.write("float" + indexlist.get(i) + " = Frama_C_float_interval(" + minlist.get(i) + "," + maxlist.get(i) + ");\n");
+                        bw.newLine();
+                    }
+                    bw.write("\n" + x);
+                    bw.newLine();
+                } else if (x.contains("utils.h")) {
+                    bw.write("//" + x);
+                    bw.newLine();
+                } else if (x.contains("__ESBMC_assert")) {
+                    bw.write("//" + x);
+                    bw.newLine();
+                    bw.write("//@assert(" + x.substring(x.indexOf("(") + 1, x.indexOf(",")) + ");");
+                    bw.newLine();
+                } else if (x == null) {
+                    break;
+                } else
+                    bw.write(x);
                 bw.newLine();
             }
-            else if(x.contains("utils.h"))
-            {
-                bw.write("//" + x);
-                bw.newLine();
+            is.close();
+            bw.flush();
+            bw.close();
+            if (flag) {
+                file.delete();
+                tmpfile.renameTo(new File(file.getAbsolutePath()));
+            } else {
+                tmpfile.delete();
             }
-            else if(x.contains("__ESBMC_assert"))
-            {
-                bw.write("//" + x);
-                bw.newLine();
-                bw.write("//@assert(" + x.substring(x.indexOf("(")+1, x.indexOf(",")) + ");");
-                bw.newLine();
-            }
-            else
-            {
-                bw.write(x);
-                bw.newLine();
-            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
-        br.close();
-        bw.close();
     }
     public static void main(final String[] arguments) throws IOException {
         keras2c_injectfxp converter = new keras2c_injectfxp();
@@ -553,7 +690,20 @@ public class keras2c_injectfxp{
             System.out.println("The provided intervals file path is " + arguments[2] + ".");
 
         }
+        else if(arguments[0].contains("summarize"))
+        {
+            System.out.println("The provided interval file path is " + arguments[1] + ".");
+            System.out.println("The output path is " + arguments[2] + ".");
+            converter.summarizeIntervals_onnx(Path.of(arguments[1]));
+        }
+        /*else if(arguments[0].contains("framac"))
+        {
+            System.out.println("The provided vnnlib path is " + arguments[1] + ".");
+            System.out.println("The provided C file path is " + arguments[2] + ".");
+        }*/
+        else
+        {
 
-
+        }
     }
 }
