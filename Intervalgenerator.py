@@ -211,6 +211,15 @@ def importIntervalAcasXU(esbmcfile, esbmcassumes):
             esbmcbuff.write(esbmcline)
     esbmcbuff.close()
 
+def importIntervalcifar(esbmcfile, esbmcassumes):
+    esbmclines = []
+    with open(esbmcfile, 'r') as f:
+        esbmclines = f.readlines()
+        f.close()
+    esbmcbuff = open(esbmcfile, 'w')
+    for esbmcline in esbmclines:
+        if ""
+
 def getEsbmcIntervalFromNeuron(neuron, esbmcassumes):
     for esbmcassume in esbmcassumes:
         if neuron in esbmcassume:
