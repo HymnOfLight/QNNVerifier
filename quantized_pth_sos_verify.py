@@ -54,6 +54,9 @@ Poly = Dict[Exponent, object]
 
 @dataclass
 class VerificationResult:
+    clean_margin: float
+    clean_property_violated: bool
+    label_consistent_with_prediction: bool
     attack_method: str
     attack_found: bool
     attack_margin: float
@@ -581,13 +584,25 @@ def main() -> None:
 
     base_margin = float(margin_from_logits(logits0, y, t).item())
     print(f"[info] base prediction={pred0}, true_label={y}, target_label={t}, margin={base_margin:.6f}")
+    label_consistent = pred0 == y
+    if args.true_label is not None and not label_consistent:
+        print(
+            "[warn] model prediction and --true-label disagree on clean input. "
+            "Check label/source preprocessing consistency."
+        )
+    clean_property_violated = base_margin <= 0.0
+    if clean_property_violated:
+        print(
+            "[result] clean input already violates margin property (epsilon=0): "
+            "robustness for this (x,y,target) query does not hold."
+        )
 
-    attack_method = args.attack
+    attack_method = "clean-check"
     adv_margin = base_margin
     adv_pred = pred0
-    attack_found = False
+    attack_found = bool(clean_property_violated)
 
-    if args.attack != "none":
+    if args.attack != "none" and not clean_property_violated:
         if args.attack in ("auto", "pgd"):
             try:
                 adv_x, adv_margin = pgd_attack(
@@ -641,6 +656,8 @@ def main() -> None:
         print(f"[info] attack={attack_method}, margin={adv_margin:.6f}, pred={adv_pred}")
         if attack_found:
             print("[result] adversarial sample found in epsilon-ball; model is not robust.")
+    elif args.attack != "none" and clean_property_violated:
+        print("[info] skipping attack stage because property already fails at epsilon=0.")
 
     flat0 = flatten_tensor(x0.detach().cpu()).numpy()
     k = int(max(1, args.subspace_dim))
@@ -742,7 +759,12 @@ def main() -> None:
         "Attack verifies full input-space vulnerability if found. "
         "SOS certificate applies to the selected coordinate subspace only."
     )
+    if clean_property_violated:
+        note += " Clean-input margin is non-positive; robustness is already refuted at epsilon=0."
     result = VerificationResult(
+        clean_margin=float(base_margin),
+        clean_property_violated=bool(clean_property_violated),
+        label_consistent_with_prediction=bool(label_consistent),
         attack_method=attack_method,
         attack_found=bool(attack_found),
         attack_margin=float(adv_margin),
