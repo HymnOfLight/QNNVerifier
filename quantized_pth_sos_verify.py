@@ -40,7 +40,7 @@ import json
 import math
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import cvxpy as cp
 import numpy as np
@@ -54,6 +54,9 @@ Poly = Dict[Exponent, object]
 
 @dataclass
 class VerificationResult:
+    clean_margin: float
+    clean_property_violated: bool
+    label_consistent_with_prediction: bool
     attack_method: str
     attack_found: bool
     attack_margin: float
@@ -61,9 +64,9 @@ class VerificationResult:
     base_label: int
     target_label: int
     sos_status: str
-    sos_polynomial_lb: float
-    residual_lb: float
-    certified_lb_subspace: float
+    sos_polynomial_lb: Optional[float]
+    residual_lb: Optional[float]
+    certified_lb_subspace: Optional[float]
     rigorous_subspace_certificate: bool
     robust_in_verified_subspace: bool
     note: str
@@ -356,6 +359,32 @@ def choose_coordinates_from_gradient(
     return idx
 
 
+def choose_coordinates_from_spsa(
+    model: nn.Module,
+    x: torch.Tensor,
+    y: int,
+    t: int,
+    k: int,
+    samples: int,
+    delta: float,
+    clip_min: float,
+    clip_max: float,
+) -> np.ndarray:
+    grad = torch.zeros_like(x)
+    for _ in range(samples):
+        u = torch.randint_like(x, low=0, high=2, dtype=torch.int64).float() * 2.0 - 1.0
+        x_plus = torch.clamp(x + delta * u, clip_min, clip_max)
+        x_minus = torch.clamp(x - delta * u, clip_min, clip_max)
+        m_plus = margin_value(model, x_plus, y, t)
+        m_minus = margin_value(model, x_minus, y, t)
+        grad += ((m_plus - m_minus) / (2.0 * delta)) * u
+    grad /= float(samples)
+    g = grad.detach().abs().flatten()
+    k = min(k, g.numel())
+    idx = torch.topk(g, k=k).indices.cpu().numpy()
+    return idx
+
+
 def monomial_exponents(dim: int, max_degree: int) -> List[Exponent]:
     out: List[Exponent] = []
 
@@ -454,7 +483,7 @@ def sos_lower_bound_box(
     dim: int,
     eps: np.ndarray,
     multiplier_degree: int,
-) -> Tuple[float, str]:
+) -> Tuple[Optional[float], str]:
     max_deg = 0
     for e in poly_coeff.keys():
         max_deg = max(max_deg, sum(e))
@@ -489,8 +518,25 @@ def sos_lower_bound_box(
         constraints.append(lhs.get(e, 0.0) == q_poly.get(e, 0.0))
 
     prob = cp.Problem(cp.Maximize(gamma), constraints)
-    prob.solve(solver=cp.SCS, eps=1e-5, max_iters=200000, verbose=False)
-    return float(gamma.value), prob.status
+    attempts = [
+        ("SCS", {"solver": cp.SCS, "eps": 1e-5, "max_iters": 200000, "verbose": False}),
+        ("CLARABEL", {"solver": cp.CLARABEL, "verbose": False}),
+    ]
+    last_status = "not_solved"
+    for solver_name, kwargs in attempts:
+        try:
+            prob.solve(**kwargs)
+        except Exception as exc:
+            last_status = f"{solver_name}_error:{exc}"
+            continue
+        last_status = f"{solver_name}:{prob.status}"
+        if (
+            prob.status in ("optimal", "optimal_inaccurate")
+            and gamma.value is not None
+            and np.isfinite(gamma.value)
+        ):
+            return float(gamma.value), last_status
+    return None, last_status
 
 
 def build_grid_box(eps_vec: np.ndarray, points_each_dim: int) -> np.ndarray:
@@ -538,13 +584,25 @@ def main() -> None:
 
     base_margin = float(margin_from_logits(logits0, y, t).item())
     print(f"[info] base prediction={pred0}, true_label={y}, target_label={t}, margin={base_margin:.6f}")
+    label_consistent = pred0 == y
+    if args.true_label is not None and not label_consistent:
+        print(
+            "[warn] model prediction and --true-label disagree on clean input. "
+            "Check label/source preprocessing consistency."
+        )
+    clean_property_violated = base_margin <= 0.0
+    if clean_property_violated:
+        print(
+            "[result] clean input already violates margin property (epsilon=0): "
+            "robustness for this (x,y,target) query does not hold."
+        )
 
-    attack_method = args.attack
+    attack_method = "clean-check"
     adv_margin = base_margin
     adv_pred = pred0
-    attack_found = False
+    attack_found = bool(clean_property_violated)
 
-    if args.attack != "none":
+    if args.attack != "none" and not clean_property_violated:
         if args.attack in ("auto", "pgd"):
             try:
                 adv_x, adv_margin = pgd_attack(
@@ -598,14 +656,30 @@ def main() -> None:
         print(f"[info] attack={attack_method}, margin={adv_margin:.6f}, pred={adv_pred}")
         if attack_found:
             print("[result] adversarial sample found in epsilon-ball; model is not robust.")
+    elif args.attack != "none" and clean_property_violated:
+        print("[info] skipping attack stage because property already fails at epsilon=0.")
 
     flat0 = flatten_tensor(x0.detach().cpu()).numpy()
     k = int(max(1, args.subspace_dim))
     try:
         coords = choose_coordinates_from_gradient(model, x0, y, t, k)
     except Exception as exc:
-        print(f"[warn] gradient coordinate selection failed: {exc}; using first k coordinates")
-        coords = np.arange(min(k, flat0.size))
+        print(f"[warn] gradient coordinate selection failed: {exc}; trying SPSA sensitivity")
+        try:
+            coords = choose_coordinates_from_spsa(
+                model=model,
+                x=x0,
+                y=y,
+                t=t,
+                k=k,
+                samples=max(8, args.spsa_samples),
+                delta=max(1e-6, args.spsa_delta),
+                clip_min=args.clip_min,
+                clip_max=args.clip_max,
+            )
+        except Exception as exc2:
+            print(f"[warn] SPSA coordinate selection failed: {exc2}; using first k coordinates")
+            coords = np.arange(min(k, flat0.size))
     if len(coords) == 0:
         raise RuntimeError("No coordinates selected for SOS subspace")
 
@@ -653,17 +727,27 @@ def main() -> None:
             "(not a deterministic proof)."
         )
 
-    residual_lb = float(np.min(residual) - (l_margin + l_poly) * h)
-    certified_lb = float(gamma_poly_lb + residual_lb)
-    robust_subspace = certified_lb > 0.0
-
-    print(
-        "[info] SOS(poly) LB={:.6f}, residual LB={:.6f}, certified subspace LB={:.6f}".format(
-            gamma_poly_lb, residual_lb, certified_lb
+    residual_lb: Optional[float] = None
+    certified_lb: Optional[float] = None
+    robust_subspace = False
+    if gamma_poly_lb is None:
+        print(
+            "[warn] SOS solver did not return a finite lower bound "
+            f"(status={sos_status}); certification is inconclusive."
         )
-    )
+    else:
+        residual_lb = float(np.min(residual) - (l_margin + l_poly) * h)
+        certified_lb = float(gamma_poly_lb + residual_lb)
+        robust_subspace = certified_lb > 0.0
+        print(
+            "[info] SOS(poly) LB={:.6f}, residual LB={:.6f}, certified subspace LB={:.6f}".format(
+                gamma_poly_lb, residual_lb, certified_lb
+            )
+        )
 
-    if rigorous:
+    if gamma_poly_lb is None:
+        print("[result] SOS stage inconclusive (no valid SDP optimum returned).")
+    elif rigorous:
         if robust_subspace:
             print("[result] deterministic certificate: robust in verified coordinate subspace.")
         else:
@@ -675,7 +759,12 @@ def main() -> None:
         "Attack verifies full input-space vulnerability if found. "
         "SOS certificate applies to the selected coordinate subspace only."
     )
+    if clean_property_violated:
+        note += " Clean-input margin is non-positive; robustness is already refuted at epsilon=0."
     result = VerificationResult(
+        clean_margin=float(base_margin),
+        clean_property_violated=bool(clean_property_violated),
+        label_consistent_with_prediction=bool(label_consistent),
         attack_method=attack_method,
         attack_found=bool(attack_found),
         attack_margin=float(adv_margin),
@@ -683,9 +772,9 @@ def main() -> None:
         base_label=int(pred0),
         target_label=int(t),
         sos_status=str(sos_status),
-        sos_polynomial_lb=float(gamma_poly_lb),
-        residual_lb=float(residual_lb),
-        certified_lb_subspace=float(certified_lb),
+        sos_polynomial_lb=None if gamma_poly_lb is None else float(gamma_poly_lb),
+        residual_lb=residual_lb,
+        certified_lb_subspace=certified_lb,
         rigorous_subspace_certificate=bool(rigorous),
         robust_in_verified_subspace=bool(robust_subspace),
         note=note,
